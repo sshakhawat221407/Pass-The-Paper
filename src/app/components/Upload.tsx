@@ -98,7 +98,7 @@ export function Upload({ user }: UploadProps) {
   };
 
   return (
-    <div className="min-h-screen flex flex-col" style={{ backgroundColor: '#F0D7C7' }}>
+    <div className="min-h-screen flex flex-col" style={{ backgroundColor: '#FDF6F0' }}>
       <div className="flex-1 max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full">
         <h2 className="text-3xl font-bold mb-6">Upload Resource</h2>
 
