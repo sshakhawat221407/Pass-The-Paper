@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ChevronLeft, Check, Crown, Star, Zap, TrendingUp, Wallet as WalletIcon, Smartphone, X, Clock, Calendar } from 'lucide-react';
+import { ChevronLeft, Check, Crown, Star, Zap, TrendingUp, Wallet as WalletIcon, Smartphone, X, Clock, Calendar, Lock, AlertCircle } from 'lucide-react';
 import { User } from '../../App';
 import { useMockData } from '../../utils/MockDataContext';
 import type { MembershipPlan } from '../../utils/MockDataContext';
@@ -96,11 +96,35 @@ export function MembershipPageScreen({ user, onBack }: MembershipPageScreenProps
   const [transactionNumber, setTransactionNumber] = useState('');
   const [paymentMessage, setPaymentMessage] = useState('');
 
-  const selectedPlanDetails = plans.find(plan => plan.id === selectedPlan) || plans[0];
-
   const daysRemaining = getDaysRemaining(liveUser.membershipExpiry);
   const isExpiringSoon = daysRemaining !== null && daysRemaining <= 7 && daysRemaining > 0;
   const isExpired = daysRemaining !== null && daysRemaining <= 0;
+
+  // Active plan guards (not expired)
+  const isMonthlyActive = currentPlan === 'premium_monthly' && !isExpired;
+  const isYearlyActive  = currentPlan === 'premium_yearly'  && !isExpired;
+
+  /**
+   * Returns whether a plan is locked for selection:
+   * - Monthly active  → Free is locked (can still upgrade to Yearly)
+   * - Yearly active   → Free and Monthly are locked (can't change at all until expiry)
+   */
+  const isPlanLocked = (planId: MembershipPlan): boolean => {
+    if (isMonthlyActive && planId === 'free') return true;
+    if (isYearlyActive  && (planId === 'free' || planId === 'premium_monthly')) return true;
+    return false;
+  };
+
+  /** Human-readable reason why the plan is locked */
+  const lockReason = (planId: MembershipPlan): string => {
+    if (isYearlyActive && planId === 'premium_monthly')
+      return `Unavailable while Yearly is active. Comes back on ${formatExpiryDate(liveUser.membershipExpiry)}.`;
+    if ((isMonthlyActive || isYearlyActive) && planId === 'free')
+      return `You cannot downgrade to Free until your current plan expires on ${formatExpiryDate(liveUser.membershipExpiry)}.`;
+    return '';
+  };
+
+  const selectedPlanDetails = plans.find(plan => plan.id === selectedPlan) || plans[0];
 
   const resetPaymentForm = () => {
     setShowPayment(false);
@@ -110,15 +134,33 @@ export function MembershipPageScreen({ user, onBack }: MembershipPageScreenProps
     setPaymentMessage('');
   };
 
-  const handleSubscribe = () => {
-    if (selectedPlan === 'free') {
-      mockData.updateUser(user.id, {
-        membershipType: 'free',
-        membershipExpiry: undefined,
-      });
-      toast.success('Free plan selected');
+  const handleSelectPlan = (planId: MembershipPlan) => {
+    if (isPlanLocked(planId)) {
+      toast.error(lockReason(planId));
       return;
     }
+    setSelectedPlan(planId);
+  };
+
+  const handleSubscribe = () => {
+    // Guard: locked plan can't be subscribed to
+    if (isPlanLocked(selectedPlan)) {
+      toast.error(lockReason(selectedPlan));
+      return;
+    }
+
+    // Guard: already on this plan and it's active
+    if (selectedPlan === currentPlan && !isExpired) {
+      toast.info('You are already on this plan.');
+      return;
+    }
+
+    if (selectedPlan === 'free') {
+      mockData.updateUser(user.id, { membershipType: 'free', membershipExpiry: undefined });
+      toast.success('Switched to Free plan.');
+      return;
+    }
+
     setShowPayment(true);
   };
 
@@ -133,7 +175,6 @@ export function MembershipPageScreen({ user, onBack }: MembershipPageScreenProps
           setPaymentMessage(`Insufficient wallet balance. You need BDT ${plan.price - (liveUser.walletBalance || 0)} more.`);
           return;
         }
-
         mockData.addTransaction({
           userId: user.id,
           type: 'membership',
@@ -144,7 +185,7 @@ export function MembershipPageScreen({ user, onBack }: MembershipPageScreenProps
           membershipPlan: selectedPlan as PremiumPlan,
           status: 'approved',
         });
-        toast.success(`${plan.name} activated successfully`);
+        toast.success(`${plan.name} activated successfully!`);
         resetPaymentForm();
         return;
       }
@@ -153,7 +194,6 @@ export function MembershipPageScreen({ user, onBack }: MembershipPageScreenProps
         setPaymentMessage('Enter the phone number you sent money from');
         return;
       }
-
       if (!transactionNumber.trim()) {
         setPaymentMessage('Enter the transaction number');
         return;
@@ -178,6 +218,15 @@ export function MembershipPageScreen({ user, onBack }: MembershipPageScreenProps
     }
   };
 
+  // Determine what the bottom CTA button should say / whether it's disabled
+  const ctaDisabled = isPlanLocked(selectedPlan) || (selectedPlan === currentPlan && !isExpired && selectedPlan !== 'free');
+  const ctaLabel = (() => {
+    if (isPlanLocked(selectedPlan)) return `${selectedPlan === 'free' ? 'Free' : selectedPlan === 'premium_monthly' ? 'Monthly' : 'Yearly'} Plan Locked`;
+    if (selectedPlan === currentPlan && !isExpired) return 'Already on this Plan';
+    if (selectedPlan === 'free') return 'Switch to Free Plan';
+    return `Continue to Payment — ${selectedPlanDetails.name}`;
+  })();
+
   return (
     <div className="min-h-screen flex flex-col" style={{ backgroundColor: '#FDF6F0' }}>
       {/* Page Title Row */}
@@ -194,22 +243,24 @@ export function MembershipPageScreen({ user, onBack }: MembershipPageScreenProps
             Upgrade Your Experience
           </h1>
           <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-            Choose a free, monthly, or yearly membership plan.
+            Choose a plan that works best for you.
           </p>
           <div className="inline-flex items-center gap-2 mt-4 px-4 py-2 rounded-full bg-white border border-orange-100 text-sm font-semibold text-gray-700">
             Current plan:{' '}
-            {currentPlan === 'premium_yearly'
-              ? 'Premium Yearly'
-              : currentPlan === 'premium_monthly'
-              ? 'Premium Monthly'
-              : 'Free'}
+            <span style={{ color: '#E56E20' }}>
+              {currentPlan === 'premium_yearly'
+                ? 'Premium Yearly'
+                : currentPlan === 'premium_monthly'
+                ? 'Premium Monthly'
+                : 'Free'}
+            </span>
           </div>
         </div>
 
         {/* Active Membership Expiry Banner */}
         {currentPlan !== 'free' && liveUser.membershipExpiry && (
           <div
-            className={`rounded-2xl p-5 mb-8 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow ${
+            className={`rounded-2xl p-5 mb-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow ${
               isExpired
                 ? 'bg-red-50 border border-red-200'
                 : isExpiringSoon
@@ -220,26 +271,21 @@ export function MembershipPageScreen({ user, onBack }: MembershipPageScreenProps
             <div className="flex items-center gap-4">
               <div
                 className="w-12 h-12 rounded-full flex items-center justify-center flex-shrink-0"
-                style={{
-                  backgroundColor: isExpired ? '#FEE2E2' : isExpiringSoon ? '#FEF3C7' : '#DCFCE7',
-                }}
+                style={{ backgroundColor: isExpired ? '#FEE2E2' : isExpiringSoon ? '#FEF3C7' : '#DCFCE7' }}
               >
-                <Calendar
-                  size={22}
-                  color={isExpired ? '#DC2626' : isExpiringSoon ? '#D97706' : '#16A34A'}
-                />
+                <Calendar size={22} color={isExpired ? '#DC2626' : isExpiringSoon ? '#D97706' : '#16A34A'} />
               </div>
               <div>
                 <p className="font-semibold text-gray-900">
                   {isExpired
-                    ? 'Your membership has expired'
+                    ? 'Your membership has expired — now on Free plan'
                     : isExpiringSoon
                     ? `Expiring soon — ${daysRemaining} day${daysRemaining === 1 ? '' : 's'} left`
                     : 'Active Membership'}
                 </p>
                 <p className="text-sm text-gray-600 flex items-center gap-1.5 mt-0.5">
                   <Clock size={13} />
-                  {isExpired ? 'Expired on' : 'Renews on'}: {formatExpiryDate(liveUser.membershipExpiry)}
+                  {isExpired ? 'Expired on' : 'Expires on'}: {formatExpiryDate(liveUser.membershipExpiry)}
                   {daysRemaining !== null && !isExpired && (
                     <span className="ml-2 text-xs font-medium px-2 py-0.5 rounded-full bg-green-100 text-green-700">
                       {daysRemaining} days remaining
@@ -250,10 +296,7 @@ export function MembershipPageScreen({ user, onBack }: MembershipPageScreenProps
             </div>
             {(isExpired || isExpiringSoon) && (
               <button
-                onClick={() => {
-                  setSelectedPlan(currentPlan);
-                  setShowPayment(true);
-                }}
+                onClick={() => { setSelectedPlan(currentPlan); setShowPayment(true); }}
                 className="px-5 py-2 rounded-lg text-white text-sm font-semibold whitespace-nowrap"
                 style={{ backgroundColor: '#E56E20' }}
               >
@@ -263,22 +306,58 @@ export function MembershipPageScreen({ user, onBack }: MembershipPageScreenProps
           </div>
         )}
 
+        {/* Downgrade lock notice */}
+        {(isMonthlyActive || isYearlyActive) && (
+          <div className="flex items-start gap-3 bg-amber-50 border border-amber-200 rounded-xl p-4 mb-6">
+            <Lock size={18} className="text-amber-600 flex-shrink-0 mt-0.5" />
+            <div className="text-sm text-amber-800">
+              {isYearlyActive ? (
+                <>
+                  <strong>Yearly plan active.</strong> You cannot switch to a lower plan until your membership
+                  expires on <strong>{formatExpiryDate(liveUser.membershipExpiry)}</strong>.
+                </>
+              ) : (
+                <>
+                  <strong>Monthly plan active.</strong> You cannot downgrade to Free until your membership
+                  expires on <strong>{formatExpiryDate(liveUser.membershipExpiry)}</strong>.
+                  You can still upgrade to <strong>Premium Yearly</strong>.
+                </>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Plan Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
           {plans.map((plan) => {
             const Icon = plan.icon;
             const isSelected = selectedPlan === plan.id;
-            const isCurrent = currentPlan === plan.id;
+            const isCurrent = currentPlan === plan.id && !isExpired;
+            const locked = isPlanLocked(plan.id);
 
             return (
               <div
                 key={plan.id}
-                onClick={() => setSelectedPlan(plan.id)}
-                className={`relative bg-white rounded-2xl shadow-lg p-8 cursor-pointer transition-all ${
-                  isSelected ? 'ring-4 ring-offset-2 scale-105' : 'hover:shadow-xl'
+                onClick={() => handleSelectPlan(plan.id)}
+                className={`relative bg-white rounded-2xl shadow-lg p-8 transition-all ${
+                  locked
+                    ? 'opacity-50 cursor-not-allowed'
+                    : isSelected
+                    ? 'ring-4 ring-offset-2 scale-105 cursor-pointer'
+                    : 'hover:shadow-xl cursor-pointer'
                 }`}
-                style={isSelected ? { borderColor: plan.color, boxShadow: `0 0 0 3px ${plan.color}33` } : {}}
+                style={isSelected && !locked ? { boxShadow: `0 0 0 3px ${plan.color}33` } : {}}
               >
-                {(plan.popular || plan.bestValue || isCurrent) && (
+                {/* Lock overlay badge */}
+                {locked && (
+                  <div className="absolute top-3 right-3 flex items-center gap-1 px-2 py-1 rounded-full bg-gray-100 border border-gray-200 text-xs font-semibold text-gray-500">
+                    <Lock size={11} />
+                    Locked
+                  </div>
+                )}
+
+                {/* Top badge */}
+                {(plan.popular || plan.bestValue || isCurrent) && !locked && (
                   <div className="absolute -top-4 left-1/2 transform -translate-x-1/2">
                     <span
                       className="px-4 py-1 rounded-full text-white text-xs font-semibold shadow-md"
@@ -305,24 +384,33 @@ export function MembershipPageScreen({ user, onBack }: MembershipPageScreenProps
                   </span>
                   {plan.price > 0 && <span className="text-gray-500 text-sm block">{plan.period}</span>}
                 </div>
-                {plan.savings && (
+
+                {(plan as any).savings && (
                   <div className="text-center mb-4">
                     <span className="inline-block px-3 py-1 bg-green-100 text-green-700 text-sm font-semibold rounded-full">
-                      {plan.savings}
+                      {(plan as any).savings}
                     </span>
                   </div>
                 )}
 
-                {/* Show expiry date on current plan card */}
+                {/* Expiry on current plan card */}
                 {isCurrent && plan.id !== 'free' && liveUser.membershipExpiry && (
                   <div className="mb-4 flex items-center justify-center gap-1.5 text-xs text-gray-500 bg-gray-50 rounded-lg py-2 px-3">
                     <Calendar size={12} />
                     <span>
-                      {isExpired ? 'Expired' : 'Expires'}:{' '}
-                      <span className={`font-semibold ${isExpired ? 'text-red-600' : 'text-gray-700'}`}>
+                      Expires:{' '}
+                      <span className="font-semibold text-gray-700">
                         {formatExpiryDate(liveUser.membershipExpiry)}
                       </span>
                     </span>
+                  </div>
+                )}
+
+                {/* Lock reason hint */}
+                {locked && (
+                  <div className="mb-3 flex items-start gap-1.5 text-xs text-gray-500 bg-gray-50 rounded-lg py-2 px-3">
+                    <AlertCircle size={12} className="flex-shrink-0 mt-0.5" />
+                    <span>{lockReason(plan.id)}</span>
                   </div>
                 )}
 
@@ -337,50 +425,52 @@ export function MembershipPageScreen({ user, onBack }: MembershipPageScreenProps
                 </ul>
 
                 <button
-                  onClick={(event) => {
-                    event.stopPropagation();
-                    setSelectedPlan(plan.id);
-                  }}
+                  onClick={(e) => { e.stopPropagation(); handleSelectPlan(plan.id); }}
+                  disabled={locked}
                   className={`w-full py-3 rounded-lg font-semibold transition-all ${
-                    isSelected ? 'text-white shadow-lg' : 'border-2 text-gray-700 hover:border-gray-400'
+                    locked
+                      ? 'bg-gray-100 text-gray-400 cursor-not-allowed border border-gray-200'
+                      : isSelected
+                      ? 'text-white shadow-lg'
+                      : 'border-2 text-gray-700 hover:border-gray-400'
                   }`}
-                  style={isSelected ? { backgroundColor: plan.color } : { borderColor: '#D1D5DB' }}
+                  style={!locked && isSelected ? { backgroundColor: plan.color } : !locked ? { borderColor: '#D1D5DB' } : {}}
                 >
-                  {isSelected ? 'Selected' : 'Select Plan'}
+                  {locked ? (
+                    <span className="flex items-center justify-center gap-1.5">
+                      <Lock size={14} /> Locked
+                    </span>
+                  ) : isSelected ? (
+                    'Selected'
+                  ) : (
+                    'Select Plan'
+                  )}
                 </button>
               </div>
             );
           })}
         </div>
 
+        {/* Why Go Premium */}
         <div className="bg-white rounded-2xl shadow-lg p-8 mb-8">
           <h3 className="text-2xl font-bold mb-6 text-center">Why Go Premium?</h3>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div className="text-center">
-              <div
-                className="w-12 h-12 rounded-full mx-auto mb-3 flex items-center justify-center"
-                style={{ backgroundColor: '#E5F3FF' }}
-              >
+              <div className="w-12 h-12 rounded-full mx-auto mb-3 flex items-center justify-center" style={{ backgroundColor: '#E5F3FF' }}>
                 <TrendingUp size={24} style={{ color: '#3B82F6' }} />
               </div>
               <h4 className="font-semibold mb-2">Earn More</h4>
               <p className="text-sm text-gray-600">Get up to 20% bonus on your resource earnings.</p>
             </div>
             <div className="text-center">
-              <div
-                className="w-12 h-12 rounded-full mx-auto mb-3 flex items-center justify-center"
-                style={{ backgroundColor: '#FEF3E2' }}
-              >
+              <div className="w-12 h-12 rounded-full mx-auto mb-3 flex items-center justify-center" style={{ backgroundColor: '#FEF3E2' }}>
                 <Zap size={24} style={{ color: '#E56E20' }} />
               </div>
               <h4 className="font-semibold mb-2">Priority Access</h4>
               <p className="text-sm text-gray-600">Get faster approval and early access to new features.</p>
             </div>
             <div className="text-center">
-              <div
-                className="w-12 h-12 rounded-full mx-auto mb-3 flex items-center justify-center"
-                style={{ backgroundColor: '#F3E8FF' }}
-              >
+              <div className="w-12 h-12 rounded-full mx-auto mb-3 flex items-center justify-center" style={{ backgroundColor: '#F3E8FF' }}>
                 <Crown size={24} style={{ color: '#8B5CF6' }} />
               </div>
               <h4 className="font-semibold mb-2">Stand Out</h4>
@@ -389,19 +479,23 @@ export function MembershipPageScreen({ user, onBack }: MembershipPageScreenProps
           </div>
         </div>
 
+        {/* CTA */}
         <div className="text-center">
           <button
             onClick={handleSubscribe}
-            className="px-12 py-4 rounded-lg text-white font-semibold text-lg shadow-lg hover:opacity-90 transition-all"
+            disabled={ctaDisabled}
+            className={`px-12 py-4 rounded-lg text-white font-semibold text-lg shadow-lg transition-all ${
+              ctaDisabled ? 'opacity-50 cursor-not-allowed' : 'hover:opacity-90'
+            }`}
             style={{ backgroundColor: '#E56E20' }}
           >
-            {selectedPlan === 'free'
-              ? 'Select Free Plan'
-              : `Continue to Payment for ${selectedPlanDetails.name}`}
+            {ctaLabel}
           </button>
-          <p className="text-sm text-gray-500 mt-4">
-            Wallet payments activate instantly. bKash and Nagad requests need admin approval.
-          </p>
+          {!ctaDisabled && (
+            <p className="text-sm text-gray-500 mt-4">
+              Wallet payments activate instantly. bKash and Nagad requests need admin approval.
+            </p>
+          )}
         </div>
       </div>
 
@@ -423,16 +517,13 @@ export function MembershipPageScreen({ user, onBack }: MembershipPageScreenProps
               {(
                 [
                   { id: 'Wallet' as PaymentMethod, label: 'Wallet', icon: WalletIcon },
-                  { id: 'Bkash' as PaymentMethod, label: 'bKash', icon: Smartphone },
-                  { id: 'Nagad' as PaymentMethod, label: 'Nagad', icon: Smartphone },
+                  { id: 'Bkash'  as PaymentMethod, label: 'bKash',  icon: Smartphone },
+                  { id: 'Nagad'  as PaymentMethod, label: 'Nagad',  icon: Smartphone },
                 ] as const
               ).map(({ id, label, icon: Icon }) => (
                 <button
                   key={id}
-                  onClick={() => {
-                    setPaymentMethod(id);
-                    setPaymentMessage('');
-                  }}
+                  onClick={() => { setPaymentMethod(id); setPaymentMessage(''); }}
                   className={`p-3 rounded-xl border-2 text-sm font-semibold flex flex-col items-center gap-2 ${
                     paymentMethod === id
                       ? 'border-[#E56E20] bg-orange-50 text-[#E56E20]'
@@ -456,8 +547,8 @@ export function MembershipPageScreen({ user, onBack }: MembershipPageScreenProps
               <>
                 <div className="bg-pink-50 border border-pink-200 rounded-xl p-3 mb-4 text-sm text-pink-900">
                   Send BDT {selectedPlanDetails.price} to{' '}
-                  <strong>{MERCHANT_NUMBER}</strong> using the Send Money option, then enter your
-                  sender phone number and transaction number below.
+                  <strong>{MERCHANT_NUMBER}</strong> using Send Money, then enter your
+                  sender phone number and transaction ID below.
                 </div>
                 <label className="block text-xs font-semibold text-gray-500 uppercase mb-1.5">
                   Sender Phone Number
@@ -465,10 +556,7 @@ export function MembershipPageScreen({ user, onBack }: MembershipPageScreenProps
                 <input
                   type="tel"
                   value={paymentPhone}
-                  onChange={(event) => {
-                    setPaymentPhone(event.target.value.replace(/\D/g, ''));
-                    setPaymentMessage('');
-                  }}
+                  onChange={(e) => { setPaymentPhone(e.target.value.replace(/\D/g, '')); setPaymentMessage(''); }}
                   placeholder="01XXXXXXXXX"
                   maxLength={11}
                   className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-[#E56E20] outline-none mb-4 text-sm"
@@ -479,10 +567,7 @@ export function MembershipPageScreen({ user, onBack }: MembershipPageScreenProps
                 <input
                   type="text"
                   value={transactionNumber}
-                  onChange={(event) => {
-                    setTransactionNumber(event.target.value);
-                    setPaymentMessage('');
-                  }}
+                  onChange={(e) => { setTransactionNumber(e.target.value); setPaymentMessage(''); }}
                   placeholder="Enter bKash/Nagad TrxID"
                   className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-[#E56E20] outline-none mb-4 text-sm"
                 />
