@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { ShoppingCart, X, ChevronLeft } from 'lucide-react';
 import { useMockData, Resource } from '../../utils/MockDataContext';
 import { User } from '../../App';
+import { Footer } from '../Footer';
 
 type CartPageScreenProps = {
   user: User;
@@ -14,14 +15,12 @@ export function CartPageScreen({ user, onBack, onCheckout }: CartPageScreenProps
   const [cartItems, setCartItems] = useState<Resource[]>([]);
 
   useEffect(() => {
-    const items = mockData.getCartItems();
-    setCartItems(items);
+    setCartItems(mockData.getCartItems());
   }, [mockData]);
 
   const removeFromCart = (resourceId: string) => {
     mockData.removeFromCart(resourceId);
-    const updatedItems = mockData.getCartItems();
-    setCartItems(updatedItems);
+    setCartItems(mockData.getCartItems());
   };
 
   const totalBDT = cartItems
@@ -33,28 +32,31 @@ export function CartPageScreen({ user, onBack, onCheckout }: CartPageScreenProps
     .reduce((sum, item) => sum + item.price, 0);
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: '#F0D7C7' }}>
-      {/* Header */}
-      <header className="bg-white shadow-sm border-b sticky top-0 z-40">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
-            <div className="flex items-center gap-3">
-              <button
-                onClick={onBack}
-                className="p-2 -ml-2 rounded-lg hover:bg-gray-100 transition-colors"
-              >
-                <ChevronLeft size={24} color="#E56E20" />
-              </button>
-              <h2 className="font-semibold text-gray-900 text-xl">Shopping Cart</h2>
-            </div>
-          </div>
-        </div>
-      </header>
+    <div className="min-h-screen flex flex-col" style={{ backgroundColor: '#FDF6F0' }}>
+
+      {/* Page Title Row — no white bar */}
+      <div className="flex items-center gap-2 px-4 pt-5 pb-3">
+        <button
+          onClick={onBack}
+          className="p-2 rounded-lg hover:bg-white/60 transition-colors"
+        >
+          <ChevronLeft size={22} color="#E56E20" />
+        </button>
+        <h2 className="text-2xl font-bold" style={{ color: '#E56E20' }}>Shopping Cart</h2>
+        {cartItems.length > 0 && (
+          <span
+            className="px-2 py-0.5 rounded-full text-white text-xs font-semibold"
+            style={{ backgroundColor: '#E56E20' }}
+          >
+            {cartItems.length}
+          </span>
+        )}
+      </div>
 
       {/* Main Content */}
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="flex-1 max-w-4xl mx-auto px-4 pb-6 w-full">
         {cartItems.length === 0 ? (
-          <div className="bg-white rounded-2xl shadow-md p-12 text-center">
+          <div className="bg-white rounded-2xl shadow-md p-12 text-center mt-2">
             <ShoppingCart size={64} className="mx-auto mb-4 text-gray-300" />
             <p className="text-gray-500 text-lg mb-6">Your cart is empty</p>
             <button
@@ -70,28 +72,28 @@ export function CartPageScreen({ user, onBack, onCheckout }: CartPageScreenProps
             {/* Cart Items */}
             <div className="space-y-4 mb-6">
               {cartItems.map((item) => (
-                <div key={item.id} className="bg-white rounded-xl shadow-md p-6">
+                <div key={item.id} className="bg-white rounded-xl shadow-sm p-5">
                   <div className="flex justify-between items-start">
                     <div className="flex-1">
-                      <h3 className="font-semibold text-lg mb-2">{item.title}</h3>
-                      <p className="text-sm text-gray-600 mb-3">{item.category}</p>
-                      <p className="font-semibold text-lg" style={{ color: '#E56E20' }}>
+                      <h3 className="font-semibold text-lg mb-1">{item.title}</h3>
+                      <p className="text-sm text-gray-500 mb-2">{item.category}</p>
+                      <p className="font-bold text-lg" style={{ color: '#E56E20' }}>
                         {item.price} {item.priceType === 'money' ? 'BDT' : 'Points'}
                       </p>
                     </div>
                     <button
                       onClick={() => removeFromCart(item.id)}
-                      className="p-2 rounded-lg hover:bg-red-50 text-red-500 transition-colors"
+                      className="p-2 rounded-lg hover:bg-red-50 text-red-400 hover:text-red-600 transition-colors"
                     >
-                      <X size={24} />
+                      <X size={22} />
                     </button>
                   </div>
                 </div>
               ))}
             </div>
 
-            {/* Summary */}
-            <div className="bg-white rounded-xl shadow-md p-6">
+            {/* Order Summary */}
+            <div className="bg-white rounded-xl shadow-sm p-6">
               <h3 className="font-bold text-xl mb-4">Order Summary</h3>
               <div className="space-y-3 mb-6">
                 {totalBDT > 0 && (
@@ -122,6 +124,8 @@ export function CartPageScreen({ user, onBack, onCheckout }: CartPageScreenProps
           </>
         )}
       </div>
+
+      <Footer />
     </div>
   );
 }
