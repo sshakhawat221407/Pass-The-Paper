@@ -179,21 +179,16 @@ export function MembershipPageScreen({ user, onBack }: MembershipPageScreenProps
   };
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: '#F0D7C7' }}>
-      <header className="bg-white shadow-sm border-b sticky top-0 z-40">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
-            <div className="flex items-center gap-3">
-              <button onClick={onBack} className="p-2 -ml-2 rounded-lg hover:bg-gray-100 transition-colors">
-                <ChevronLeft size={24} color="#E56E20" />
-              </button>
-              <h2 className="font-semibold text-gray-900 text-xl">Membership Plans</h2>
-            </div>
-          </div>
-        </div>
-      </header>
+    <div className="min-h-screen flex flex-col" style={{ backgroundColor: '#FDF6F0' }}>
+      {/* Page Title Row */}
+      <div className="flex items-center gap-2 px-4 pt-5 pb-3">
+        <button onClick={onBack} className="p-2 rounded-lg hover:bg-white/60 transition-colors">
+          <ChevronLeft size={22} color="#E56E20" />
+        </button>
+        <h2 className="text-2xl font-bold" style={{ color: '#E56E20' }}>Membership Plans</h2>
+      </div>
 
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+      <div className="flex-1 max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pb-10 w-full">
         <div className="text-center mb-6">
           <h1 className="text-4xl font-bold mb-4" style={{ color: '#E56E20' }}>
             Upgrade Your Experience
