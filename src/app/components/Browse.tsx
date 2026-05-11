@@ -131,7 +131,7 @@ export function Browse({ user }: BrowseProps) {
   const courses = ['All', ...Array.from(new Set(resources.map(r => r.course).filter(Boolean)))];
 
   return (
-    <div className="min-h-screen flex flex-col" style={{ backgroundColor: '#F0D7C7' }}>
+    <div className="min-h-screen flex flex-col" style={{ backgroundColor: '#FDF6F0' }}>
       {/* Cart Sidebar */}
       {showCart && (
         <div className="fixed inset-0 z-50 flex items-start justify-end" style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}>
