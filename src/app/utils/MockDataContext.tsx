@@ -600,6 +600,35 @@ export function MockDataProvider({ children }: { children: ReactNode }) {
     localStorage.setItem('ptp_notifications', JSON.stringify(notifications));
   }, [notifications]);
 
+  // Auto-expire memberships: check on mount and every minute
+  useEffect(() => {
+    const expireCheck = () => {
+      const now = new Date();
+      setUsers(prev => {
+        const hasExpired = prev.some(
+          u => u.membershipType !== 'free' && u.membershipExpiry && new Date(u.membershipExpiry) <= now
+        );
+        if (!hasExpired) return prev;
+        return prev.map(u => {
+          if (u.membershipType !== 'free' && u.membershipExpiry && new Date(u.membershipExpiry) <= now) {
+            return { ...u, membershipType: 'free' as MembershipPlan, membershipExpiry: undefined };
+          }
+          return u;
+        });
+      });
+      setCurrentUser(prev => {
+        if (!prev) return null;
+        if (prev.membershipType !== 'free' && prev.membershipExpiry && new Date(prev.membershipExpiry) <= now) {
+          return { ...prev, membershipType: 'free' as MembershipPlan, membershipExpiry: undefined };
+        }
+        return prev;
+      });
+    };
+    expireCheck();
+    const interval = setInterval(expireCheck, 60000);
+    return () => clearInterval(interval);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
   useEffect(() => {
     localStorage.setItem('ptp_feedbacks', JSON.stringify(feedbacks));
   }, [feedbacks]);
