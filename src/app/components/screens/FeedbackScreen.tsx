@@ -1,6 +1,5 @@
 import { useState } from 'react';
-import { MessageSquare, Star, Edit2, Save, X } from 'lucide-react';
-import { Header } from '../Header';
+import { MessageSquare, Star, Edit2, Save, X, ChevronLeft } from 'lucide-react';
 import { Button } from '../Button';
 import { Footer } from '../Footer';
 import { Screen } from '../../App';
@@ -111,13 +110,16 @@ export function FeedbackScreen({ onNavigate, onBack }: FeedbackScreenProps) {
   };
 
   return (
-    <div className="min-h-screen flex flex-col" style={{ backgroundColor: '#F0D7C7' }}>
-      <Header 
-        title="Feedback" 
-        onBack={handleBack}
-      />
-      
-      <div className="flex-1 overflow-y-auto px-4 pt-4 pb-4">
+    <div className="min-h-screen flex flex-col" style={{ backgroundColor: '#FDF6F0' }}>
+      {/* Page Title Row */}
+      <div className="flex items-center gap-2 px-4 pt-5 pb-3">
+        <button onClick={handleBack} className="p-2 rounded-lg hover:bg-white/60 transition-colors">
+          <ChevronLeft size={22} color="#E56E20" />
+        </button>
+        <h2 className="text-2xl font-bold" style={{ color: '#E56E20' }}>Feedback</h2>
+      </div>
+
+      <div className="flex-1 overflow-y-auto px-4 pb-4">
         {/* System Feedback Section */}
         <div className="bg-white rounded-xl p-4 mb-4 border border-gray-200">
           <div className="flex items-center justify-between mb-3">
