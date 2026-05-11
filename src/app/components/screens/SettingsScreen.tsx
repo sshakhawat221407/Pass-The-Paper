@@ -1,5 +1,4 @@
-import { User, Lock, CreditCard, HelpCircle, LogOut, ChevronRight } from 'lucide-react';
-import { Header } from '../Header';
+import { User, Lock, CreditCard, HelpCircle, LogOut, ChevronRight, ChevronLeft } from 'lucide-react';
 import { Footer } from '../Footer';
 import { Screen } from '../../App';
 
@@ -32,10 +31,16 @@ export function SettingsScreen({ onNavigate, onBack }: SettingsScreenProps) {
   ];
 
   return (
-    <div className="min-h-screen flex flex-col" style={{ backgroundColor: '#F0D7C7' }}>
-      <Header title="Settings" onBack={onBack} />
-      
-      <div className="flex-1 overflow-y-auto px-4 pt-4 pb-4">
+    <div className="min-h-screen flex flex-col" style={{ backgroundColor: '#FDF6F0' }}>
+      {/* Page Title Row */}
+      <div className="flex items-center gap-2 px-4 pt-5 pb-3">
+        <button onClick={onBack} className="p-2 rounded-lg hover:bg-white/60 transition-colors">
+          <ChevronLeft size={22} color="#E56E20" />
+        </button>
+        <h2 className="text-2xl font-bold" style={{ color: '#E56E20' }}>Settings</h2>
+      </div>
+
+      <div className="flex-1 overflow-y-auto px-4 pb-4">
         {settingsSections.map((section, sectionIndex) => (
           <div key={sectionIndex} className="mb-4">
             <h3 className="text-xs font-semibold text-gray-600 uppercase mb-2 px-2">
