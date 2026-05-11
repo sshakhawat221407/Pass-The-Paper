@@ -1,6 +1,5 @@
 import { useState } from 'react';
-import { User, Camera } from 'lucide-react';
-import { Header } from '../Header';
+import { User, Camera, ChevronLeft } from 'lucide-react';
 import { Button } from '../Button';
 import { Input } from '../Input';
 import { Footer } from '../Footer';
@@ -88,10 +87,16 @@ export function EditProfileScreen({ onNavigate, onBack }: EditProfileScreenProps
   };
 
   return (
-    <div className="h-full flex flex-col" style={{ backgroundColor: '#F0D7C7' }}>
-      <Header title="Edit Profile" onBack={handleBack} />
-      
-      <div className="flex-1 overflow-y-auto px-4 pt-4 pb-4">
+    <div className="min-h-screen flex flex-col" style={{ backgroundColor: '#FDF6F0' }}>
+      {/* Page Title Row */}
+      <div className="flex items-center gap-2 px-4 pt-5 pb-3">
+        <button onClick={handleBack} className="p-2 rounded-lg hover:bg-white/60 transition-colors">
+          <ChevronLeft size={22} color="#E56E20" />
+        </button>
+        <h2 className="text-2xl font-bold" style={{ color: '#E56E20' }}>Edit Profile</h2>
+      </div>
+
+      <div className="flex-1 overflow-y-auto px-4 pb-4">
         {/* Profile Photo */}
         <div className="bg-white rounded-xl p-6 mb-4 border border-gray-200 text-center">
           <div className="relative inline-block">
