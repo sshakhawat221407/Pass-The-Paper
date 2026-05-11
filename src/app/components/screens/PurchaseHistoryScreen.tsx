@@ -1,6 +1,5 @@
 import { useState } from 'react';
-import { FileText, CheckCircle, Clock, X, Download, Receipt } from 'lucide-react';
-import { Header } from '../Header';
+import { FileText, CheckCircle, Clock, X, Download, Receipt, ChevronLeft } from 'lucide-react';
 import { Footer } from '../Footer';
 import { Screen } from '../../App';
 import { useMockData } from '../../utils/MockDataContext';
@@ -36,10 +35,16 @@ export function PurchaseHistoryScreen({ onNavigate, onBack }: PurchaseHistoryScr
   };
 
   return (
-    <div className="min-h-screen flex flex-col" style={{ backgroundColor: '#F0D7C7' }}>
-      <Header title="Purchase History" onBack={handleBack} />
+    <div className="min-h-screen flex flex-col" style={{ backgroundColor: '#FDF6F0' }}>
+      {/* Page Title Row */}
+      <div className="flex items-center gap-2 px-4 pt-5 pb-3">
+        <button onClick={handleBack} className="p-2 rounded-lg hover:bg-white/60 transition-colors">
+          <ChevronLeft size={22} color="#E56E20" />
+        </button>
+        <h2 className="text-2xl font-bold" style={{ color: '#E56E20' }}>Purchase History</h2>
+      </div>
 
-      <div className="flex-1 overflow-y-auto px-4 pt-4 pb-4">
+      <div className="flex-1 overflow-y-auto px-4 pb-4">
         {purchases.length === 0 ? (
           <div className="text-center py-16">
             <div
