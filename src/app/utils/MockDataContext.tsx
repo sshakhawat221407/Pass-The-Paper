@@ -179,6 +179,10 @@ type MockDataContextType = {
   getUserPurchases: () => Purchase[];
   addNotification: (notification: Omit<Notification, 'id' | 'createdAt'>) => void;
   getNotifications: () => Notification[];
+  markNotificationAsRead: (notificationId: string) => void;
+  markAllNotificationsAsRead: () => void;
+  deleteNotification: (notificationId: string) => void;
+  deleteAllNotifications: () => void;
   addFeedback: (feedback: Omit<Feedback, 'id' | 'createdAt'>) => void;
   getFeedbacks: () => Feedback[];
   addWithdrawal: (withdrawal: Omit<Withdrawal, 'id' | 'createdAt'>) => Withdrawal;
@@ -1160,6 +1164,28 @@ export function MockDataProvider({ children }: { children: ReactNode }) {
     return notifications.filter(notification => notification.userId === currentUser.id);
   };
 
+  const markNotificationAsRead = (notificationId: string) => {
+    setNotifications(prev =>
+      prev.map(n => n.id === notificationId ? { ...n, isRead: true } : n)
+    );
+  };
+
+  const markAllNotificationsAsRead = () => {
+    if (!currentUser) return;
+    setNotifications(prev =>
+      prev.map(n => n.userId === currentUser.id ? { ...n, isRead: true } : n)
+    );
+  };
+
+  const deleteNotification = (notificationId: string) => {
+    setNotifications(prev => prev.filter(n => n.id !== notificationId));
+  };
+
+  const deleteAllNotifications = () => {
+    if (!currentUser) return;
+    setNotifications(prev => prev.filter(n => n.userId !== currentUser.id));
+  };
+
   const addFeedback = (feedback: Omit<Feedback, 'id' | 'createdAt'>) => {
     const newFeedback: Feedback = {
       ...feedback,
@@ -1386,6 +1412,10 @@ export function MockDataProvider({ children }: { children: ReactNode }) {
         getUserPurchases,
         addNotification,
         getNotifications,
+        markNotificationAsRead,
+        markAllNotificationsAsRead,
+        deleteNotification,
+        deleteAllNotifications,
         addFeedback,
         getFeedbacks,
         addWithdrawal,
