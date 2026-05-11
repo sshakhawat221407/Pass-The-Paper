@@ -16,6 +16,8 @@ import { CheckoutPageScreen } from './components/screens/CheckoutPageScreen';
 import { NotificationsPageScreen } from './components/screens/NotificationsPageScreen';
 import { MembershipPageScreen } from './components/screens/MembershipPageScreen';
 import { HistoryScreen } from './components/screens/HistoryScreen';
+import { PurchaseHistoryScreen } from './components/screens/PurchaseHistoryScreen';
+import { MyUploadsScreen } from './components/screens/MyUploadsScreen';
 import { FeedbackScreen } from './components/screens/FeedbackScreen';
 import { EditProfileScreen } from './components/screens/EditProfileScreen';
 import { SettingsScreen } from './components/screens/SettingsScreen';
@@ -56,6 +58,7 @@ export type StudentPage =
   | 'checkout'
   | 'membership'
   | 'history'
+  | 'my-uploads'
   | 'feedback'
   | 'edit-profile'
   | 'settings';
@@ -178,6 +181,7 @@ function AppContent() {
             'profile',
             'edit-profile',
             'history',
+            'my-uploads',
             'feedback',
             'membership',
             'settings',
@@ -206,7 +210,7 @@ function AppContent() {
               setActiveTab('profile');
             }}
             onNavigateToUploads={() => {
-              setCurrentPage('history');
+              setCurrentPage('my-uploads');
               setActiveTab('profile');
             }}
             onNavigateToFeedback={() => {
@@ -266,7 +270,14 @@ function AppContent() {
         )}
 
         {currentPage === 'history' && (
-          <HistoryScreen
+          <PurchaseHistoryScreen
+            onNavigate={(screen) => setCurrentPage(screen)}
+            onBack={() => setCurrentPage('profile')}
+          />
+        )}
+
+        {currentPage === 'my-uploads' && (
+          <MyUploadsScreen
             onNavigate={(screen) => setCurrentPage(screen)}
             onBack={() => setCurrentPage('profile')}
           />
