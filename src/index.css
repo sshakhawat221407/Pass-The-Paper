@@ -1,0 +1,12 @@
+@import 'tailwindcss' source(none);
+@source '../**/*.{js,ts,jsx,tsx}';
+@import 'tw-animate-css';
+@import '../default_shadcn_theme.css';
+@import './styles/globals.css';
+
+
+html, body, #root {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+}

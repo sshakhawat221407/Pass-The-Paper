@@ -1,0 +1,58 @@
+╔════════════════════════════════════════════════════════════╗
+║  HOW TO EXPORT YOUR PASS THE PAPER CODE FROM FIGMA MAKE  ║
+╚════════════════════════════════════════════════════════════╝
+
+Your complete application is already built and running in Figma Make!
+
+📍 PROJECT LOCATION: /workspaces/default/code/
+
+═══════════════════════════════════════════════════════════
+
+METHOD 1: Use Figma Make's Export Feature
+──────────────────────────────────────────────────────────
+1. Look for "Export" or "Download" button in Figma Make
+2. This will download all your project files
+3. Extract and run: pnpm install && pnpm run dev
+
+═══════════════════════════════════════════════════════════
+
+METHOD 2: Copy Code Manually
+──────────────────────────────────────────────────────────
+All source code is in this project:
+- src/app/App.tsx (main app)
+- src/app/components/ (all components)
+- src/styles/ (styling)
+- package.json (dependencies)
+
+You can copy these files to your local machine.
+
+═══════════════════════════════════════════════════════════
+
+METHOD 3: Deploy Directly from Figma Make
+──────────────────────────────────────────────────────────
+Deploy to Vercel/Netlify directly from this environment!
+
+Ask me to help deploy to:
+- Vercel (recommended)
+- Netlify
+- Other hosting platforms
+
+═══════════════════════════════════════════════════════════
+
+📦 WHAT'S ALREADY BUILT:
+✅ 60+ React components
+✅ Student portal (browse, upload, cart, wallet)
+✅ Admin dashboard (verification, approvals, bans)
+✅ Shopping cart & checkout
+✅ Payment integration (mocked)
+✅ Notifications system
+✅ Profile management
+✅ Ban & appeals system
+
+═══════════════════════════════════════════════════════════
+
+💡 RECOMMENDED: Deploy directly from here instead of downloading!
+
+Just say: "Deploy to Vercel" and I'll handle it for you!
+
+═══════════════════════════════════════════════════════════
